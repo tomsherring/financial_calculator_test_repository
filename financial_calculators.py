@@ -1,4 +1,32 @@
 import math
+import requests
+import datetime
+
+api_url = 'https://api.api-ninjas.com/v1/interestrate'
+headers = {'X-Api-Key': 'U45SfaZ3E304c67incPLNQ==KRN7igB5BKGAaEsC'}
+params = {
+    'country': 'United Kingdom',
+}
+response = requests.get(api_url, headers=headers, params=params)
+if response.status_code == 200:
+    data = response.json()
+
+    # Use a for loop to iterate through the list of dictionaries
+    for rate_info in data['central_bank_rates']:
+        if rate_info['country'] == 'United Kingdom':
+            uk_interest_rate = rate_info['rate_pct']
+            last_updated = rate_info['last_updated']
+            #print("UK Interest Rate:", uk_interest_rate)
+            #print("Last Updated:", last_updated)
+            break  # Exit the loop after finding the UK data
+else:
+    print("Error:", response.status_code)
+
+
+date_object = datetime.datetime.strptime(last_updated, '%m-%d-%Y')
+
+formatted_date = date_object.strftime('%d/%m/%Y')
+
 
 # Brief: You have been approached by a financial services company to
 # create a program that allows the user to choose between two calculators.
@@ -49,16 +77,15 @@ def investment_calc_decorator(func):
         num_years_f = int(num_years) if num_years.is_integer() else num_years
         a_f = int(a) if a.is_integer() else a
 
-        print(
-            f"\nBased on an initial investment of £{
-                deposit_f}, with an interest rate of "
-            f"{int_rate_f}% over {num_years_f} years, you will receive £{a_f}"
-        )
+        print(f"Based on an initial investment of £{deposit_f}", end=" ")
+        print(f"with an interest rate of {int_rate_f}% over", end=" ")
+        print(f"{num_years_f} years, you will receive £{a_f}", end=" ")
+        print("at the end of the term.")
 
     return wrapper
 
 
-# Decorator to wrap the return values from bond_calulator() in text.
+# Decorator to wrap the return values from bond_calculator() in text.
 def bond_calc_decorator(func):
     def wrapper(*args, **kwargs):
         house_value, interest, num_months, repayment = func(*args, **kwargs)
@@ -79,18 +106,18 @@ def bond_calc_decorator(func):
     return wrapper
 
 
-# Investment calulator. Returns 1 of 2 equations based on user input.
+# Investment calculator. Returns 1 of 2 equations based on user input.
 # Ideally I would apply defensive programming here to ensure the user input is valid;
 # however, this is outside of the scope of the brief.
 @investment_calc_decorator
-def investment_calulator():
+def investment_calculator():
     print("\nThank you for selecting the investment calculator\n")
     deposit = float(
         input("Please enter the total amount you wish to invest: "))
-    interest_rate = float(input("Please enter the interest rate: "))
+    interest_rate = float(uk_interest_rate)
     num_years = float(input("How many years do you plan to invest: "))
     simple_or_compound = input(
-        "Please indicate if you want a 'simple' or 'compound' investment instrument?: "
+        "Please choose a 'simple' or 'compound' savings account?: "
     )
     # how to return this as yes/no or true/false
     r = interest_rate / 100
@@ -111,12 +138,14 @@ def investment_calulator():
 # Bond calculator. Returns the bond repayment amount based on user input.
 @bond_calc_decorator
 def bond_calculator():
-    print("\nThank you for selecting the bond interest repayment calculator\n")
+    print("")
+    print("Thank you for selecting the bond interest repayment calculator.")
+    print("")
     house_value = float(input("What is the current value of your house: "))
-    interest = float(input("Please enter the interest rate: "))
+    interest = float(uk_interest_rate)
     num_months = float(
         input(
-            "Please enter the number of months over which you intnd to repay the loan: "
+            "Please enter the length of the loan (months): "
         )
     )
     i = (interest / 100) / 12
@@ -128,22 +157,34 @@ def bond_calculator():
 
 
 # The below selector func executes at the beginning of the program.
-# It prompts the user to choose between the two calcualtor funcs.
+# It prompts the user to choose between the two calculator functions.
 # If the user doesn't make a correct selection/input, they are prompted to try again.
 
 
 # I am using a while loop here to keep the program running until the user exits.
 def calculator_selector():
+
+    print(f"""
+              
+    Thank you for choosing CoGrammer's financial calculators. 
+    This program will help you calculate the amount of interest you'll earn on
+    an investment, or the amount you'll have to pay on a home loan.
+    
+    The interest rate available is tied to the UK central bank rate, currently
+    set at {uk_interest_rate}%, updated {formatted_date}.
+        
+    Please choose either:
+    investment - to calculate the amount of interest you'll earn on your investment
+    bond       - to calculate the amount you'll have to pay on a home loan
+    """)
+
     while True:
         calculator_selection = input(
-                "\nThank you for choosing CoGrammer's financial calculators. Please choose either: \n\n"
-                "investment - to calculate the amount of interest you'll earn on your investment \n"
-                "bond       - to calculate the amount you'll have to pay on a home loan \n\n"
-                "Enter either 'investment' or 'bond' from the menu above to proceed: "
-            )
-        
+            "Please enter 'investment' or 'bond' from the menu above to proceed: "
+        )
+
         if calculator_selection.lower().strip() == "investment":
-            investment_calulator()
+            investment_calculator()
         elif calculator_selection.lower().strip() == "bond":
             bond_calculator()
         else:
